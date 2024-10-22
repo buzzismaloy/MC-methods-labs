@@ -9,7 +9,7 @@
 #include <cmath>
 
 const int GRID_SIZE = 20;  // Размер сетки
-const int SLEEP_TIME = 100;
+const int SLEEP_TIME = 70;
 const std::string FILENAME = "output.txt";
 
 const std::string LIVING_CELL = "O ";
