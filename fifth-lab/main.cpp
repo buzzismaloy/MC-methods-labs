@@ -6,20 +6,27 @@
 #include <chrono>
 #include <thread>
 #include <fstream>
+#include <cmath>
 
 const int GRID_SIZE = 20;  // Размер сетки
 const int SLEEP_TIME = 100;
-const std::string& FILENAME = "output.txt";
-const int PROB_OF_MOV = 35; // вероятность v1
-const int PROB_OF_DIV = 65; // вероятность v2
-const int PROB_OF_DEATH = 25; // вероятность v3
+const std::string FILENAME = "output.txt";
+/*const int V_1 = 1; // вероятность перемещения
+const int V_2 = 2; // вероятность смерти клетки если больше 3х соседей
+const int V_3 = 3;*/ // вероятность создания клетки
 
-const std::string& LIVING_CELL = "O ";
-const std::string& DEAD_CELL = ". ";
-const std::string& LIVING_CELL_CMD = "\u2591";
-const std::string& DEAD_CELL_CMD = "\u2588";
+const std::string LIVING_CELL = "O ";
+const std::string DEAD_CELL = ". ";
+const std::string LIVING_CELL_CMD = "\u2591";
+const std::string DEAD_CELL_CMD = "\u2588";
 const std::string RESET_COLOUR = "\033[0m"; // Сброс цвета
 const std::string LIGHT_GREEN = "\033[1;32m"; // Светло-зеленый
+
+enum class Event {
+	MOV = 1,
+	DEATH,
+	DIV
+};
 
 // Функция для вывода текущего состояния сетки
 void print_grid(const std::vector<std::vector<int>>& grid, std::ofstream& output) {
@@ -58,45 +65,55 @@ std::vector<std::pair<int, int>> get_neighbors(int x, int y) {
     return neighbors;
 }
 
+// ф-ция для генерации времени по методу первой реакции
+double generate_time(double v){
+	double e = static_cast<double>(rand()) / RAND_MAX;
+	return - std::log(e) / v;
+}
+
 // Функция для обработки событий
 std::vector<std::vector<int>> process_event(std::vector<std::vector<int>>& grid) {
-    std::vector<std::vector<int>> new_grid = grid;
+	std::vector<std::vector<int>> new_grid = grid;
 
-    for (int i = 0; i < GRID_SIZE; ++i) {
-        for (int j = 0; j < GRID_SIZE; ++j) {
-            if (grid[i][j] == 1) {  // Если клетка жива
-                auto neighbors = get_neighbors(i, j);
-                int live_neighbors = 0;
+	for (int i = 0; i < GRID_SIZE; ++i) {
+		for (int j = 0; j < GRID_SIZE; ++j) {
+			if (grid[i][j] == 1) {
+				auto neighbors = get_neighbors(i, j);
+				int live_neighbors = 0;
+				double t_mov = generate_time(static_cast<double>(static_cast<int>(Event::MOV)));	
+				double t_death = generate_time(static_cast<double>(static_cast<int>(Event::DEATH)));	
+				double t_div = generate_time(static_cast<double>(static_cast<int>(Event::DIV)));	
 
-                // Подсчёт живых соседей
-                for (auto& neighbor : neighbors) {
-                    if (grid[neighbor.first][neighbor.second] == 1) { // 1 значит что клетка жива
-                        ++live_neighbors;
-                    }
-                }
+				double min_time = std::min({t_mov, t_death, t_div});
 
-                // Умирает, если больше 3 соседей (вероятность v=2)
-                if (live_neighbors > 3 && (rand() % 100) < PROB_OF_DEATH) {
-                    new_grid[i][j] = 0;
-                }
-                // Движение клетки (вероятность v=1)
-                else if ((rand() % 100) < PROB_OF_MOV) {
-                    auto direction = neighbors[rand() % neighbors.size()];
-                    new_grid[i][j] = 0;
-                    new_grid[direction.first][direction.second] = 1;
-                }
-                // Создание новой клетки (вероятность v=3)
-                else if (live_neighbors > 0 && (rand() % 100) < PROB_OF_DIV) {
-                    auto direction = neighbors[rand() % neighbors.size()];
-                    if (new_grid[direction.first][direction.second] == 0) {
-                        new_grid[direction.first][direction.second] = 1;
-                    }
-                }
-            }
-        }
-    }
-    return new_grid;
+				for (const auto& neighbor : neighbors) {
+					if (grid[neighbor.first][neighbor.second] == 1) 
+						++live_neighbors;
+				}
+
+				if (min_time == t_mov ) {
+					auto direction = neighbors[rand() % neighbors.size()];
+					new_grid[i][j] = 0;
+					new_grid[direction.first][direction.second] = 1;
+				}
+				else if (min_time == t_death && live_neighbors > 3) {
+					new_grid[i][j] = 0;
+				}
+				else if (min_time == t_div && live_neighbors > 0) {
+					auto direction = neighbors[rand() % neighbors.size()];
+
+					if (new_grid[direction.first][direction.second] == 0) 
+						new_grid[direction.first][direction.second] = 1;
+				}
+
+
+			}
+		}
+	}
+	
+	return new_grid;	
 }
+
 
 // Проверка, есть ли живые клетки на поле
 bool has_alive_cells(const std::vector<std::vector<int>>& grid) {
@@ -187,7 +204,7 @@ int main() {
 				right_choice = true;
 				break;
 			default:
-				std::cout << "\nWrong input, press 1 or 2\n";
+				std::cout << "\nWrong input, press 1, 2 or 3\n";
 		}
 		if (right_choice) break;
 	}
