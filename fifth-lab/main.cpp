@@ -11,9 +11,6 @@
 const int GRID_SIZE = 20;  // Размер сетки
 const int SLEEP_TIME = 100;
 const std::string FILENAME = "output.txt";
-/*const int V_1 = 1; // вероятность перемещения
-const int V_2 = 2; // вероятность смерти клетки если больше 3х соседей
-const int V_3 = 3;*/ // вероятность создания клетки
 
 const std::string LIVING_CELL = "O ";
 const std::string DEAD_CELL = ". ";
@@ -24,8 +21,8 @@ const std::string LIGHT_GREEN = "\033[1;32m"; // Светло-зеленый
 
 enum class Event {
 	MOV = 1,
-	DEATH,
-	DIV
+	DEATH = 2,
+	DIV = 3
 };
 
 // Функция для вывода текущего состояния сетки
@@ -79,6 +76,7 @@ std::vector<std::vector<int>> process_event(std::vector<std::vector<int>>& grid)
 		for (int j = 0; j < GRID_SIZE; ++j) {
 			if (grid[i][j] == 1) {
 				auto neighbors = get_neighbors(i, j);
+				std::vector<std::pair<int, int>> free_neighbors;
 				int live_neighbors = 0;
 				double t_mov = generate_time(static_cast<double>(static_cast<int>(Event::MOV)));	
 				double t_death = generate_time(static_cast<double>(static_cast<int>(Event::DEATH)));	
@@ -89,21 +87,27 @@ std::vector<std::vector<int>> process_event(std::vector<std::vector<int>>& grid)
 				for (const auto& neighbor : neighbors) {
 					if (grid[neighbor.first][neighbor.second] == 1) 
 						++live_neighbors;
+					else 
+						free_neighbors.push_back(neighbor);
 				}
 
-				if (min_time == t_mov ) {
-					auto direction = neighbors[rand() % neighbors.size()];
-					new_grid[i][j] = 0;
-					new_grid[direction.first][direction.second] = 1;
+				if (min_time == t_mov) {
+					if (!free_neighbors.empty()) {
+						auto direction = free_neighbors[rand() % free_neighbors.size()];
+						new_grid[i][j] = 0;
+						new_grid[direction.first][direction.second] = 1;
+					}
 				}
 				else if (min_time == t_death && live_neighbors > 3) {
 					new_grid[i][j] = 0;
 				}
 				else if (min_time == t_div && live_neighbors > 0) {
-					auto direction = neighbors[rand() % neighbors.size()];
+					if (!free_neighbors.empty()) {	
+					auto direction = free_neighbors[rand() % free_neighbors.size()];
 
-					if (new_grid[direction.first][direction.second] == 0) 
-						new_grid[direction.first][direction.second] = 1;
+					//if (new_grid[direction.first][direction.second] == 0) 
+					new_grid[direction.first][direction.second] = 1;
+					}
 				}
 
 
@@ -191,7 +195,7 @@ void choose_action(int ch){
 }
 
 int main() {
-    	srand(time(0));  // Инициализация генератора случайных чисел
+    	srand(time(0));  
 	std::cout << "To print all data to terminal, enter 1, to print data to file, enter 2(these both variants are executed until";
 	std::cout << "the max number of iterations is reached);\nIf you want the program work until all cells die, enter 3, data is displayed to terminal)\n";
 	int ch;
