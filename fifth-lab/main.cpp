@@ -78,11 +78,6 @@ std::vector<std::vector<int>> process_event(std::vector<std::vector<int>>& grid)
 				auto neighbors = get_neighbors(i, j);
 				std::vector<std::pair<int, int>> free_neighbors;
 				int live_neighbors = 0;
-				double t_mov = generate_time(static_cast<double>(static_cast<int>(Event::MOV)));	
-				double t_death = generate_time(static_cast<double>(static_cast<int>(Event::DEATH)));	
-				double t_div = generate_time(static_cast<double>(static_cast<int>(Event::DIV)));	
-
-				double min_time = std::min({t_mov, t_death, t_div});
 
 				for (const auto& neighbor : neighbors) {
 					if (grid[neighbor.first][neighbor.second] == 1) 
@@ -91,22 +86,73 @@ std::vector<std::vector<int>> process_event(std::vector<std::vector<int>>& grid)
 						free_neighbors.push_back(neighbor);
 				}
 
-				if (min_time == t_mov) {
-					if (!free_neighbors.empty()) {
-						auto direction = free_neighbors[rand() % free_neighbors.size()];
-						new_grid[i][j] = 0;
-						new_grid[direction.first][direction.second] = 1;
+				if (live_neighbors > 3) {	
+			       		double t_mov = generate_time(static_cast<double>(static_cast<int>(Event::MOV))),
+				       		t_div = generate_time(static_cast<double>(static_cast<int>(Event::DIV))), 
+				       		t_death = generate_time(static_cast<double>(static_cast<int>(Event::DEATH)));	
+					for (int k = 1; k < free_neighbors.size(); ++k) {
+						double temp_mov = generate_time(static_cast<double>(static_cast<int>(Event::MOV)));	
+						if (t_mov > temp_mov ) 
+							t_mov = temp_mov;
 					}
-				}
-				else if (min_time == t_death && live_neighbors > 3) {
-					new_grid[i][j] = 0;
-				}
-				else if (min_time == t_div && live_neighbors > 0) {
-					if (!free_neighbors.empty()) {	
-					auto direction = free_neighbors[rand() % free_neighbors.size()];
 
-					//if (new_grid[direction.first][direction.second] == 0) 
-					new_grid[direction.first][direction.second] = 1;
+					for (int k = 1; k < live_neighbors; ++k) {
+						double temp_div = generate_time(static_cast<double>(static_cast<int>(Event::DIV)));
+						if (t_div > temp_div)
+							t_div = temp_div;
+					}
+
+					double min_time = std::min({t_mov, t_death, t_div});	
+
+					if (min_time == t_mov) {
+						if (!free_neighbors.empty()) {
+							auto direction = free_neighbors[rand() % free_neighbors.size()];
+							new_grid[i][j] = 0;
+							new_grid[direction.first][direction.second] = 1;
+						}
+					}
+					else if (min_time == t_death && live_neighbors > 3) {
+						new_grid[i][j] = 0;
+					}
+					else if (min_time == t_div && live_neighbors > 0) {
+						if (!free_neighbors.empty()) {	
+						auto direction = free_neighbors[rand() % free_neighbors.size()];
+
+						new_grid[direction.first][direction.second] = 1;
+						}
+					}
+
+				}
+				else {		
+			       		double t_mov = generate_time(static_cast<double>(static_cast<int>(Event::MOV))),
+				       		t_div = generate_time(static_cast<double>(static_cast<int>(Event::DIV))); 
+					for (int k = 1; k < free_neighbors.size(); ++k) {
+						double temp_mov = generate_time(static_cast<double>(static_cast<int>(Event::MOV)));	
+						if (t_mov > temp_mov ) 
+							t_mov = temp_mov;
+					}
+
+					for (int k = 1; k < live_neighbors; ++k) {
+						double temp_div = generate_time(static_cast<double>(static_cast<int>(Event::DIV)));
+						if (t_div > temp_div)
+							t_div = temp_div;
+					}
+
+					double min_time = std::min(t_mov, t_div);	
+
+					if (min_time == t_mov) {
+						if (!free_neighbors.empty()) {
+							auto direction = free_neighbors[rand() % free_neighbors.size()];
+							new_grid[i][j] = 0;
+							new_grid[direction.first][direction.second] = 1;
+						}
+					}
+					else if (min_time == t_div && live_neighbors > 0) {
+						if (!free_neighbors.empty()) {	
+						auto direction = free_neighbors[rand() % free_neighbors.size()];
+
+						new_grid[direction.first][direction.second] = 1;
+						}
 					}
 				}
 
