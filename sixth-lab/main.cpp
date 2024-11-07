@@ -236,8 +236,8 @@ void run_simulation(PrintType type) {
 		}
 
 		case PrintType::TO_FILE: {
-			std::ofstream output(GRID_FILENAME);//создаем поток вывода в файл
-    			if (!output.is_open()){//открываем поток и если он не открылся выводим ошибку и убиваем прогу
+			std::ofstream output(GRID_FILENAME);
+    			if (!output.is_open()){
 				std::cerr << "Error in opening file " << GRID_FILENAME << '\n';
 				exit(0);
     			}
@@ -248,8 +248,7 @@ void run_simulation(PrintType type) {
 
 				int x = cell_selector(rng);
 				int y = cell_selector(rng);
-				chosen_x = x;
-				chosen_y = y;
+				
 				perform_event(grid, x, y, rng);
 
 				if(!has_alive_cells(grid)) {
