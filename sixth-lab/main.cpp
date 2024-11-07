@@ -4,15 +4,17 @@
 #include <random>
 #include <chrono>
 #include <thread>
+#include <fstream>
 
 const int GRID_SIZE = 20;
 const int SIMULATION_TIME = 10 * (GRID_SIZE * GRID_SIZE);
-const int SLEEP_TIME = 100;
+const int SLEEP_TIME = 10;
 const double MOVE_PROB = 1.0;
 const double BIRTH_PROB = 3.0;
 const double DEATH_PROB = 2.0;
 const double SUM_EVENTS = MOVE_PROB + BIRTH_PROB + DEATH_PROB;
 
+const std::string GRID_FILENAME = "output.txt";
 const std::string LIVING_CELL = "O ";
 const std::string DEAD_CELL = ". ";
 const std::string LIVING_CELL_CMD = "\u2591";
@@ -26,6 +28,11 @@ enum class Event {
 	BIRTH
 };
 
+enum class PrintType {
+	TERMINAL,
+	TO_FILE
+};
+
 struct Cell {
 	int x, y;
 	bool alive;
@@ -34,16 +41,33 @@ struct Cell {
 std::vector<std::vector<Cell>> initialize_grid(std::vector<std::pair<int, int>>& first_generation);
 int count_neighbors(const std::vector<std::vector<Cell>>& grid, int x, int y);
 void perform_event(std::vector<std::vector<Cell>>& grid, int x, int y, std::default_random_engine& rng);
-void run_simulation();
+void run_simulation(PrintType type);
 void print_grid(const std::vector<std::vector<Cell>>& grid);
+void print_grid_to_file(const std::vector<std::vector<Cell>>& grid, std::ofstream& output);
 Event linear_search(double number);
 bool has_alive_cells(const std::vector<std::vector<Cell>>& grid);
+PrintType process_user_input();
 
+unsigned short int actions_count = 0;
 
 int main() {
-	run_simulation();
+	PrintType type = process_user_input();
+	run_simulation(type);
 
 	return 0;
+}
+
+PrintType process_user_input() {
+	std::cout << "Choose where to print data: enter terminal for terminal and file for file\n>";
+	std::string input;
+	while(true) {
+		std::cin >> input;
+		if (input == "terminal") 
+			return PrintType::TERMINAL;
+		
+		else if (input == "file") 
+			return PrintType::TO_FILE;
+	}
 }
 
 std::vector<std::vector<Cell>> initialize_grid(std::vector<std::pair<int, int>>& first_generation) {
@@ -108,13 +132,16 @@ void perform_event(std::vector<std::vector<Cell>>& grid, int x, int y, std::defa
 				if (!grid[nx][ny].alive) {
 					grid[nx][ny].alive = true;
 					grid[x][y].alive = false;
+					++actions_count;
 				}
 
 				break;
 			}
 			case Event::DEATH: {
-				if (neighbors > 3)
+				if (neighbors > 3) {
 					grid[x][y].alive = false;
+					++actions_count;
+				}
 				break;
 			}
 			case Event::BIRTH: {
@@ -129,6 +156,7 @@ void perform_event(std::vector<std::vector<Cell>>& grid, int x, int y, std::defa
 
 						if (!grid[nx][ny].alive){
 							grid[nx][ny].alive = true;
+							++actions_count;
 							break;
 						}
 					}
@@ -168,29 +196,73 @@ void print_grid(const std::vector<std::vector<Cell>>& grid) {
 	std::cout << '\n';
 }
 
-void run_simulation() {
+void print_grid_to_file(const std::vector<std::vector<Cell>>& grid, std::ofstream& output) {
+	for (int i = 0; i < GRID_SIZE; ++i) {
+        	for (int j = 0; j < GRID_SIZE; ++j) {
+            		output << (grid[i][j].alive ? LIVING_CELL : DEAD_CELL);
+        	}
+        	output << '\n';
+    	}
+	output << "\n\n";
+}
+
+void run_simulation(PrintType type) {
 	std::vector<std::pair<int, int>> first_generation = { {5, 5}, {15, 5}, {5, 15}, {15, 15} };
 	auto grid = initialize_grid(first_generation); 
 	std::default_random_engine rng(std::chrono::system_clock::now().time_since_epoch().count());
 	std::uniform_int_distribution<int> cell_selector(0, GRID_SIZE - 1);
-
+	
 	int chosen_x = 0, chosen_y = 0;
-	for (int t = 0; t < SIMULATION_TIME; ++t) {
-		std::cout << "\x1b[2J\nStep " << t << ":\n";
-		std::cout << "Chosen cell: " << '(' << chosen_x << ';' << chosen_y << ')' << '\n';
-		print_grid(grid);
+	switch(type){
+		case PrintType::TERMINAL: {		
+			for (int t = 0; t < SIMULATION_TIME; ++t) {
+				std::cout << "\x1b[2J\nStep " << t << ":\n";
+				std::cout << "Chosen cell: " << '(' << chosen_x << ';' << chosen_y << ')' << '\n';
+				print_grid(grid);
 
-		int x = cell_selector(rng);
-		int y = cell_selector(rng);
-		chosen_x = x;
-		chosen_y = y;
-		perform_event(grid, x, y, rng);
+				int x = cell_selector(rng);
+				int y = cell_selector(rng);
+				chosen_x = x;
+				chosen_y = y;
+				perform_event(grid, x, y, rng);
 
-		if(!has_alive_cells(grid)) {
-			std::cout << "All the cells died out after " << t << " steps.\n";
+				if(!has_alive_cells(grid)) {
+					std::cout << "All the cells died out after " << t << " steps.\n";
+					break;
+				}
+				std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
+			}
+			break;	
+		}
+
+		case PrintType::TO_FILE: {
+			std::ofstream output(GRID_FILENAME);//создаем поток вывода в файл
+    			if (!output.is_open()){//открываем поток и если он не открылся выводим ошибку и убиваем прогу
+				std::cerr << "Error in opening file " << GRID_FILENAME << '\n';
+				exit(0);
+    			}
+
+			for (int t = 0; t < SIMULATION_TIME; ++t) {
+				output << "Step " << t << ":\n";
+				print_grid_to_file(grid, output);
+
+				int x = cell_selector(rng);
+				int y = cell_selector(rng);
+				chosen_x = x;
+				chosen_y = y;
+				perform_event(grid, x, y, rng);
+
+				if(!has_alive_cells(grid)) {
+					std::cout << "All the cells died out after " << t << " steps.\n";
+					break;
+				}
+			}
+			output.close();
+			std::cout << "Data has been saved to " << GRID_FILENAME << '\n';
 			break;
 		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_TIME));
 	}
+
+	std::cout << "\n\nSome statistics:\n" << actions_count << " actions were taken in " << SIMULATION_TIME << " steps\n";
 }
 
