@@ -25,7 +25,6 @@ enum class Event {
 	DEATH,
 	BIRTH
 };
-//const int SUM_EVENTS = static_cast<int>(Event::MOVE) + static_cast<int>(Event::DEATH) + static_cast<int>(Event::BIRTH);
 
 struct Cell {
 	int x, y;
@@ -78,24 +77,15 @@ int count_neighbors(const std::vector<std::vector<Cell>>& grid, int x, int y) {
 }
 
 Event linear_search(double number) {
-	/*std::vector<Event> events = { 
-		Event::MOVE, Event::DEATH, Event::BIRTH
-       	};
-
-	double probability = 0.0;
-	for (int i = 0; i < events.size(); ++i) {
-		probability += static_cast<int>(events[i]) / static_cast<double>(SUM_EVENTS);
-		if (number <= probability)
-			return events[i];
-	}
-
-	return events.back();*/
-
-	if (number <= MOVE_PROB / SUM_EVENTS)
+	double prob = MOVE_PROB / SUM_EVENTS;
+	if (number < prob)
 		return Event::MOVE;
-	if (number <= DEATH_PROB / SUM_EVENTS)
-		return Event::DEATH;
-	return Event::BIRTH;
+	
+	prob += BIRTH_PROB / SUM_EVENTS;
+	if (number < prob)
+		return Event::BIRTH;
+
+	return Event::DEATH;
 }
 
 void perform_event(std::vector<std::vector<Cell>>& grid, int x, int y, std::default_random_engine& rng) {
@@ -187,7 +177,7 @@ void run_simulation() {
 	int chosen_x = 0, chosen_y = 0;
 	for (int t = 0; t < SIMULATION_TIME; ++t) {
 		std::cout << "\x1b[2J\nStep " << t << ":\n";
-		std::cout << "Chosen x: " << chosen_x << " and y: " << chosen_y << '\n';
+		std::cout << "Chosen cell: " << '(' << chosen_x << ';' << chosen_y << ')' << '\n';
 		print_grid(grid);
 
 		int x = cell_selector(rng);
