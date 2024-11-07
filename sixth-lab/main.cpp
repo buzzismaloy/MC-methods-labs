@@ -8,7 +8,7 @@
 
 const int GRID_SIZE = 20;
 const int SIMULATION_TIME = 10 * (GRID_SIZE * GRID_SIZE);
-const int SLEEP_TIME = 10;
+const int SLEEP_TIME = 95;
 const double MOVE_PROB = 1.0;
 const double BIRTH_PROB = 3.0;
 const double DEATH_PROB = 2.0;
