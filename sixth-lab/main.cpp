@@ -45,27 +45,61 @@ void print_grid(const std::vector<std::vector<Cell>>& grid);
 void print_grid_to_file(const std::vector<std::vector<Cell>>& grid, std::ofstream& output);
 Event linear_search(double number);
 bool has_alive_cells(const std::vector<std::vector<Cell>>& grid);
-PrintType process_user_input();
+
+void process_user_input();
+void print_help();
+PrintType choose_print_type();
+PrintType print_type = PrintType::TERMINAL;
 
 unsigned short int actions_count = 0;
 
 int main() {
-	PrintType type = process_user_input();
-	run_simulation(type);
+	process_user_input();
 
 	return 0;
 }
 
-PrintType process_user_input() {
+void process_user_input() {
+	std::cout << "To run simulation enter run, to see all options enter help\n>";
+	std::string input;
+	while (true) {
+		std::cin>>input;	
+		if (input == "run") {
+			run_simulation(print_type);
+			break;
+		}
+		else if (input == "help") {
+			print_help();	
+		}
+		else if (input == "output") {
+			print_type = choose_print_type();
+			std::cout << '>';
+		}
+		else 
+			std::cout << "\nWrong input! Try again\n>";
+		
+	}
+
+}
+
+void print_help() {
+	std::cout << "To run simulation enter run\n";
+	std::cout << "You can change output type by entering output\n>";
+}
+
+PrintType choose_print_type() {
 	std::cout << "Choose where to print data: enter terminal for terminal and file for file\n>";
 	std::string input;
-	while(true) {
+	while (true) {
 		std::cin >> input;
 		if (input == "terminal") 
 			return PrintType::TERMINAL;
 		
 		else if (input == "file") 
 			return PrintType::TO_FILE;
+		else {
+			std::cout << "\nWrong input! Try again\n>";
+		}
 	}
 }
 
