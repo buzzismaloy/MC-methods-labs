@@ -60,10 +60,11 @@ int main() {
 }
 
 void process_user_input() {
+	std::cout << "This is main menu\n";
 	std::cout << "To run simulation enter run, to see all options enter help\n>";
 	std::string input;
 	while (true) {
-		std::cin>>input;	
+		std::cin >> input;	
 		if (input == "run") {
 			run_simulation(print_type);
 			break;
@@ -73,7 +74,7 @@ void process_user_input() {
 		}
 		else if (input == "output") {
 			print_type = choose_print_type();
-			std::cout << '>';
+			std::cout << "Returned to main menu\n>";
 		}
 		else 
 			std::cout << "\nWrong input! Try again\n>";
