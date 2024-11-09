@@ -34,7 +34,6 @@ enum class PrintType {
 };
 
 struct Cell {
-	int x, y;
 	bool alive;
 };
 
@@ -71,15 +70,11 @@ PrintType process_user_input() {
 }
 
 std::vector<std::vector<Cell>> initialize_grid(std::vector<std::pair<int, int>>& first_generation) {
-	std::vector<std::vector<Cell>> grid(GRID_SIZE, std::vector<Cell>(GRID_SIZE, {0, 0, false}));
+	std::vector<std::vector<Cell>> grid(GRID_SIZE, std::vector<Cell>(GRID_SIZE, {false}));
 	
 	for(const auto& gen : first_generation) {
 		grid[gen.first][gen.second].alive = true;
 	}
-	/*grid[5][5].alive = true;
-   	grid[15][5].alive = true;
-   	grid[5][15].alive = true;
-   	grid[15][15].alive = true;*/	
 
 	return grid;
 }
