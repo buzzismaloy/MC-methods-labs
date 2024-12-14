@@ -70,7 +70,7 @@ def run_simulation(grid_size, tmax=1000.0, dt=0.1):
     return np.array(results)
 
 # Размеры сетки для моделирования
-grid_sizes = [10, 20, 50, 100]
+grid_sizes = [10, 20, 50, 100, 500]
 
 # Построение графиков для разных размеров сетки
 for grid_size in grid_sizes:
