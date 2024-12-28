@@ -350,4 +350,11 @@ graph TD
 ### PS
 post scriptum, в папку 7ой лабы залил также реализацию stm_ode
 
---- 
+---
+
+# Лабораторная работа №8
+## Пространственная модель хищник-жертва
+
+### Описание задачи
+
+![Task description](eighth-lab/task.png "Task description") 
